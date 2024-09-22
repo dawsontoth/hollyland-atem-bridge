@@ -1,0 +1,16 @@
+{
+  "name": "hollyland-atem-bridge",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "atem-connection": "^3.4.0",
+    "node-libgpiod": "^0.4.6"
+  }
+}
