@@ -12,51 +12,46 @@ const atem = new Atem();
 const atemIP = '192.168.13.37';
 
 (async () => {
-  if (available()) {
-    console.log('Configuring chip...');
-    const chip = new Chip(0);
-    console.log('Configuring lines...');
-    lines = [
-      // left
-      new Line(chip, 17), // GPIO 17, aka pin 11, 6th from top (usb headers at the bottom)
-      new Line(chip, 27), // 7th from the top
-      new Line(chip, 22), // 8th from the top
-      new Line(chip, 5), // 6th from the bottom
-      new Line(chip, 6), // 5th from the  bottom
-      new Line(chip, 13), // 4th from the bottom
-      new Line(chip, 26), // 2nd from the bottom
-      // right
-      new Line(chip, 23), // 8th from the top
-      new Line(chip, 24), // 9th from the top
-      new Line(chip, 25), // 11th from the top
-      new Line(chip, 12), // 5th from the bottom
-      new Line(chip, 16), // 3rd from the bottom
-    ];
+  if (!available()) {
+    console.error("gpio is not available off of a raspberry pi");
+    process.exit(1);
+  }
+  const chip = new Chip(0);
+  const atemLineMap = {
+    // physical pins start at the top left, pins toward you, with the USB ports pointed downward, on the 3b
+    1: [ // main, tally 1
+      new Line(chip, 22 /* gpio */), // physical pin 15
+      new Line(chip, 23) // pin 16
+    ],
+    9: [ // tripod, tally 9
+      new Line(chip, 6), // 31
+      new Line(chip, 12) // 32
+    ],
+    10: [ // flycam, tally 10
+      new Line(chip, 19), // 35
+      new Line(chip, 16) // 36
+    ],
+    11: [ // handheld, tally 11
+      new Line(chip, 20), // 37
+      new Line(chip, 26) // 39
+    ],
+  };
+  const mappedInputs = Object.keys(atemLineMap).map(l => parseInt(l, 10));
 
-    console.log('Requesting output mode on all lines...');
-    for (const line of lines) {
-      line.requestOutputMode(0);
-    }
+  console.log('Requesting output mode on all lines...');
+  const lines = Object.values(atemLineMap).flat(1);
+  for (const line of lines) {
+    line.requestOutputMode();
   }
 
   atem.on('stateChanged', async (state, pathToChange) => {
-    console.log('stateChanged', pathToChange.sort());
-    console.log('previewed', [
-      state.video.mixEffects[0].previewInput,
-    ]);
-    console.log('programmed', [
-      state.video.mixEffects[0].programInput,
-    ]);
-    // Note: We only have four...
-    // TODO: lines[0].setValue(1);
-  });
-
-  atem.on('connected', () => {
-    console.log('connected to atem');
-  })
-
-  atem.on('receivedCommand', (command) => {
-    console.log('receivedCommand', command);
+    const previewed = state.video.mixEffects.map(me => me.previewInput);
+    const programmed = state.video.mixEffects.map(me => me.programInput);
+    for (const mappedInput of mappedInputs) {
+      const lines = atemLineMap[mappedInput];
+      lines[0].setValue(previewed.includes(mappedInput) ? 1 : 0);
+      lines[1].setValue(programmed.includes(mappedInput) ? 1 : 0);
+    }
   });
 
   console.log('Connecting atem...');
