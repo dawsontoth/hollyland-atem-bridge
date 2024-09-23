@@ -42,9 +42,10 @@ const atemIP = '192.168.13.37';
   const lines = Object.values(atemLineMap).flat(1);
   for (const line of lines) {
     line.requestOutputMode();
+    line.setValue(0);
   }
 
-  atem.on('stateChanged', async (state, pathToChange) => {
+  atem.on('stateChanged', (state, pathToChange) => {
     const previewed = state.video.mixEffects.map(me => me.previewInput);
     const programmed = state.video.mixEffects.map(me => me.programInput);
     for (const mappedInput of mappedInputs) {
