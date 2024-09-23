@@ -15,10 +15,14 @@ sudo apt update
 sudo apt full-upgrade
 
 
+https://github.com/nodesource/distributions#debinstall
+
 curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash - &&\
 sudo apt-get install -y nodejs
 
-sudo apt install gpiod libgpiod2 libgpiod-dev libnode-dev
+sudo apt install gpiod libgpiod2 libgpiod-dev libnode-dev git
+
+git clone https://github.com/dawsontoth/hollyland-atem-bridge.git
 
 which node
 # /usr/bin/node
