@@ -54,7 +54,6 @@ const atemIP = '192.168.13.37';
     }
   });
 
-  console.log('Connecting atem...');
   await atem.connect(atemIP);
 })();
 
