@@ -49,15 +49,23 @@ for (const line of lines) {
   line.preview.requestOutputMode();
   line.program.requestOutputMode();
 }
+let previewed = [];
+let programmed = [];
 
 atem.on('stateChanged', (state, pathToChange) => {
-  const previewed = state.video.mixEffects.map(me => me.previewInput);
-  const programmed = state.video.mixEffects.map(me => me.programInput);
+  previewed = state.video.mixEffects.map(me => me.previewInput);
+  programmed = state.video.mixEffects.map(me => me.programInput);
+  setTimeout(updateState, 1);
+});
+
+function updateState() {
   for (const line of lines) {
+    console.log(line.preview.getLineOffset());
+    console.log(line.program.getLineOffset());
     line.preview.setValue(previewed.includes(line.input) ? 1 : 0);
     line.program.setValue(programmed.includes(line.input) ? 1 : 0);
   }
-});
+}
 
 atem.connect(atemIP)
   .then(() => {
