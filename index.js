@@ -18,19 +18,19 @@ if (!available()) {
 const chip = new Chip(0);
 const atemLineMap = {
   // physical pins start at the top left, pins toward you, with the USB ports pointed downward, on the 3b
-  1: [ // main, tally 1
+  '1': [ // main, tally 1
     new Line(chip, 22 /* gpio */), // physical pin 15
     new Line(chip, 23) // pin 16
   ],
-  9: [ // tripod, tally 9
+  '9': [ // tripod, tally 9
     new Line(chip, 6), // 31
     new Line(chip, 12) // 32
   ],
-  10: [ // flycam, tally 10
+  '10': [ // flycam, tally 10
     new Line(chip, 19), // 35
     new Line(chip, 16) // 36
   ],
-  11: [ // handheld, tally 11
+  '11': [ // handheld, tally 11
     new Line(chip, 20), // 37
     new Line(chip, 26) // 39
   ],
@@ -52,9 +52,9 @@ atem.on('stateChanged', (state, pathToChange) => {
   console.log('programmed: ' + programmed.join(', '));
   for (const mappedInput of mappedInputs) {
     const lines = atemLineMap[mappedInput];
-    console.log(lines[0].getLineOffset());
+    console.log(`${mappedInput} : ${previewed.includes(mappedInput)}`);
     lines[0].setValue(previewed.includes(mappedInput) ? 1 : 0);
-    console.log(lines[1].getLineOffset());
+    console.log(`${mappedInput} : ${programmed.includes(mappedInput)}`);
     lines[1].setValue(programmed.includes(mappedInput) ? 1 : 0);
   }
 });
