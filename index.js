@@ -9,7 +9,8 @@ let lines;
 const atem = new Atem();
 
 // const atemIP = '10.1.34.34';
-const atemIP = '192.168.13.37';
+// const atemIP = '192.168.13.37';
+const atemIP = '192.168.1.47';
 
 (() => {
   if (!available()) {
@@ -47,9 +48,13 @@ const atemIP = '192.168.13.37';
   atem.on('stateChanged', (state, pathToChange) => {
     const previewed = state.video.mixEffects.map(me => me.previewInput);
     const programmed = state.video.mixEffects.map(me => me.programInput);
+    console.log('previewed: ' + previewed.join(', '));
+    console.log('programmed: ' + programmed.join(', '));
     for (const mappedInput of mappedInputs) {
       const lines = atemLineMap[mappedInput];
+      console.log(lines[0].getLineOffset());
       lines[0].setValue(previewed.includes(mappedInput) ? 1 : 0);
+      console.log(lines[0].getLineOffset());
       lines[1].setValue(programmed.includes(mappedInput) ? 1 : 0);
     }
   });
