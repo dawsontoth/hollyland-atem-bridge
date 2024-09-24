@@ -11,9 +11,9 @@ const atem = new Atem();
 // const atemIP = '10.1.34.34';
 const atemIP = '192.168.13.37';
 
-(async () => {
+(() => {
   if (!available()) {
-    console.error("gpio is not available off of a raspberry pi");
+    console.error("gpio is not available on this machine! did you follow the README?");
     process.exit(1);
   }
   const chip = new Chip(0);
@@ -42,7 +42,6 @@ const atemIP = '192.168.13.37';
   const lines = Object.values(atemLineMap).flat(1);
   for (const line of lines) {
     line.requestOutputMode();
-    line.setValue(0);
   }
 
   atem.on('stateChanged', (state, pathToChange) => {
@@ -55,18 +54,24 @@ const atemIP = '192.168.13.37';
     }
   });
 
-  await atem.connect(atemIP);
+  atem.connect(atemIP)
+    .then(() => {
+      console.log('Connected. Probably.');
+    })
+    .catch(err => {
+      console.error(err);
+    });
 })();
 
-async function cleanUp() {
+function cleanUp() {
   console.log('');
   console.log('Exiting...');
-  atem.disconnect().catch(e => console.error(e));
   if (lines) {
     for (const line of lines) {
       line.release();
     }
   }
+  atem.disconnect().catch(e => console.error(e));
   console.log('Done!');
   console.log('');
   process.exit();
