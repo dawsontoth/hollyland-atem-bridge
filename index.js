@@ -1,5 +1,5 @@
 const { Atem } = require('atem-connection');
-const { Chip, Line, available } = require("node-libgpiod");
+const { Chip, Line, available } = require('node-libgpiod');
 
 process.on('SIGINT', cleanUp);
 
@@ -12,50 +12,50 @@ const atem = new Atem();
 const atemIP = '192.168.1.47';
 
 if (!available()) {
-  console.error("gpio is not available on this machine! did you follow the README?");
+  console.error('gpio is not available on this machine! did you follow the README?');
   process.exit(1);
 }
 const chip = new Chip(0);
-const atemLineMap = {
+const lines = [
   // physical pins start at the top left, pins toward you, with the USB ports pointed downward, on the 3b
-  '1': [ // main, tally 1
-    new Line(chip, 22 /* gpio */), // physical pin 15
-    new Line(chip, 23) // pin 16
-  ],
-  '9': [ // tripod, tally 9
-    new Line(chip, 6), // 31
-    new Line(chip, 12) // 32
-  ],
-  '10': [ // flycam, tally 10
-    new Line(chip, 19), // 35
-    new Line(chip, 16) // 36
-  ],
-  '11': [ // handheld, tally 11
-    new Line(chip, 20), // 37
-    new Line(chip, 26) // 39
-  ],
-};
-const mappedInputs = Object.keys(atemLineMap).map(l => parseInt(l, 10));
+  {
+    // main
+    input: 1,
+    preview: new Line(chip, 22 /* gpio */), // physical pin 15
+    program: new Line(chip, 23), // pin 16
+  },
+  // tripod
+  {
+    input: 9,
+    preview: new Line(chip, 6), // 31
+    program: new Line(chip, 12), // 32
+  },
+  // flycam
+  {
+    input: 10,
+    preview: new Line(chip, 19), // 35
+    program: new Line(chip, 16), // 36
+  },
+  // handheld
+  {
+    input: 11,
+    preview: new Line(chip, 20), // 37
+    program: new Line(chip, 26), // 39
+  },
+];
 
 console.log('Requesting output mode on all linePairs...');
-const linePairs = Object.values(atemLineMap);
-for (const linePair of linePairs) {
-  for (const line of linePair) {
-    line.requestOutputMode();
-  }
+for (const line of lines) {
+  line.preview.requestOutputMode();
+  line.program.requestOutputMode();
 }
 
 atem.on('stateChanged', (state, pathToChange) => {
   const previewed = state.video.mixEffects.map(me => me.previewInput);
   const programmed = state.video.mixEffects.map(me => me.programInput);
-  console.log('previewed: ' + previewed.join(', '));
-  console.log('programmed: ' + programmed.join(', '));
-  for (const mappedInput of mappedInputs) {
-    const lines = atemLineMap[mappedInput];
-    console.log(`${mappedInput} : ${previewed.includes(mappedInput)}`);
-    lines[0].setValue(previewed.includes(mappedInput) ? 1 : 0);
-    console.log(`${mappedInput} : ${programmed.includes(mappedInput)}`);
-    lines[1].setValue(programmed.includes(mappedInput) ? 1 : 0);
+  for (const line of lines) {
+    line.preview.setValue(previewed.includes(line.input) ? 1 : 0);
+    line.program.setValue(programmed.includes(line.input) ? 1 : 0);
   }
 });
 
@@ -70,11 +70,10 @@ atem.connect(atemIP)
 function cleanUp() {
   console.log('');
   console.log('Exiting...');
-  if (linePairs) {
-    for (const linePair of linePairs) {
-      for (const line of linePair) {
-        line.release();
-      }
+  if (lines) {
+    for (const line of lines) {
+      line.preview.release();
+      line.program.release();
     }
   }
   atem.disconnect().catch(e => console.error(e));
