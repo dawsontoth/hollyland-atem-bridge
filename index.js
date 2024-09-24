@@ -1,5 +1,5 @@
 const { Atem } = require('atem-connection');
-const { Chip, Line, available } = require('node-libgpiod');
+const rpio = require('rpio');
 
 process.on('SIGINT', cleanUp);
 
@@ -11,43 +11,38 @@ const atem = new Atem();
 // const atemIP = '192.168.13.37';
 const atemIP = '192.168.1.47';
 
-if (!available()) {
-  console.error('gpio is not available on this machine! did you follow the README?');
-  process.exit(1);
-}
-const chip = new Chip(0);
 const lines = [
   // physical pins start at the top left, pins toward you, with the USB ports pointed downward, on the 3b
   {
     // main
     input: 1,
-    preview: new Line(chip, 22 /* gpio */), // physical pin 15
-    program: new Line(chip, 23), // pin 16
+    preview: 15,
+    program: 16,
   },
   // tripod
   {
     input: 9,
-    preview: new Line(chip, 6), // 31
-    program: new Line(chip, 12), // 32
+    preview: 31,
+    program: 32,
   },
   // flycam
   {
     input: 10,
-    preview: new Line(chip, 19), // 35
-    program: new Line(chip, 16), // 36
+    preview: 35,
+    program: 36,
   },
   // handheld
   {
     input: 11,
-    preview: new Line(chip, 20), // 37
-    program: new Line(chip, 26), // 39
+    preview: 37,
+    program: 38,
   },
 ];
 
 console.log('Requesting output mode on all linePairs...');
 for (const line of lines) {
-  line.preview.requestOutputMode();
-  line.program.requestOutputMode();
+  rpio.open(line.preview, rpio.OUTPUT, rpio.LOW);
+  rpio.open(line.program, rpio.OUTPUT, rpio.LOW);
 }
 let previewed = [];
 let programmed = [];
@@ -60,10 +55,8 @@ atem.on('stateChanged', (state, pathToChange) => {
 
 function updateState() {
   for (const line of lines) {
-    console.log(line.preview.getLineOffset());
-    console.log(line.program.getLineOffset());
-    line.preview.setValue(previewed.includes(line.input) ? 1 : 0);
-    line.program.setValue(programmed.includes(line.input) ? 1 : 0);
+    rpio.write(line.preview, previewed.includes(line.input) ? rpio.HIGH : rpio.LOW);
+    rpio.write(line.program, programmed.includes(line.input) ? rpio.HIGH : rpio.LOW);
   }
 }
 
@@ -78,12 +71,6 @@ atem.connect(atemIP)
 function cleanUp() {
   console.log('');
   console.log('Exiting...');
-  if (lines) {
-    for (const line of lines) {
-      line.preview.release();
-      line.program.release();
-    }
-  }
   atem.disconnect().catch(e => console.error(e));
   console.log('Done!');
   console.log('');
